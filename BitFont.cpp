@@ -95,82 +95,187 @@ BYTE CBitFont::GetPixel(int x, int y)
 	return pLine[x];
 }
 
-INT CBitFont::GetBits(INT mode, BYTE* pBits, INT size)
+//水平扫描,8bit,LSB
+INT  CBitFont::GetBitsHorzLSB(BYTE* pBits, INT size)
+{
+	INT x;
+	INT y;
+	INT index;
+	INT ret;
+	const BYTE mask[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+	ret = m_nHeight * ((m_nWidth+7)/8);
+	if(size < ret)
+	{
+		return ret;
+	}
+	for(y=0;y<m_nHeight;y++)
+	{
+		index = 0;
+		for(x=0;x<m_nWidth;x++)
+		{
+			if(index==0)
+			{
+				*pBits = 0;
+			}
+			if(GetPixel(x,y) != 0)
+			{
+				*pBits |= mask[index];
+			}
+			index++;
+			if(index==8)
+			{
+				index = 0;
+				pBits++;
+			}
+		}
+		if(index != 0)
+		{
+			pBits++;
+		}
+	}
+	return ret;
+}
+
+//水平扫描,8bit,MSB
+INT  CBitFont::GetBitsHorzMSB(BYTE* pBits, INT size)
 {
 	INT x;
 	INT y;
 	INT index;
 	INT ret;
 	const BYTE mask[8] = {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
-	switch(mode)
+	ret = m_nHeight * ((m_nWidth+7)/8);
+	if(size < ret)
 	{
-	case 0:	//从左到右,从上到下
-		ret = m_nHeight * ((m_nWidth+7)/8);
-		if(size < ret)
-		{
-			break;
-		}
-		for(y=0;y<m_nHeight;y++)
-		{
-			index = 0;
-			for(x=0;x<m_nWidth;x++)
-			{
-				if(index==0)
-				{
-					*pBits = 0;
-				}
-				if(GetPixel(x,y) != 0)
-				{
-					*pBits |= mask[index];
-				}
-				index++;
-				if(index==8)
-				{
-					index = 0;
-					pBits++;
-				}
-			}
-			if(index != 0)
-			{
-				pBits++;
-			}
-		}
-		break;
-	case 1:	//从上到下,从左到右
-		ret = m_nWidth * ((m_nHeight+7)/8);
-		if(size < ret)
-		{
-			break;
-		}
+		return ret;
+	}
+	for(y=0;y<m_nHeight;y++)
+	{
+		index = 0;
 		for(x=0;x<m_nWidth;x++)
 		{
-			index = 0;
-			for(y=0;y<m_nHeight;y++)
+			if(index==0)
 			{
-				if(index==0)
-				{
-					*pBits = 0;
-				}
-				if(GetPixel(x,y) != 0)
-				{
-					*pBits |= mask[index];
-				}
-				index++;
-				if(index == 8)
-				{
-					index = 0;
-					pBits++;
-				}
+				*pBits = 0;
 			}
-			if(index != 0)
+			if(GetPixel(x,y) != 0)
 			{
+				*pBits |= mask[index];
+			}
+			index++;
+			if(index==8)
+			{
+				index = 0;
 				pBits++;
 			}
 		}
-		break;
-	default:
-		ret = 0;
-		break;
+		if(index != 0)
+		{
+			pBits++;
+		}
 	}
 	return ret;
+}
+
+//垂直扫描,8bit,LSB
+INT  CBitFont::GetBitsVertLSB(BYTE* pBits, INT size)
+{
+	INT x;
+	INT y;
+	INT index;
+	INT ret;
+	const BYTE mask[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+	ret = m_nWidth * ((m_nHeight+7)/8);
+	if(size < ret)
+	{
+		return ret;
+	}
+	for(x=0;x<m_nWidth;x++)
+	{
+		index = 0;
+		for(y=0;y<m_nHeight;y++)
+		{
+			if(index==0)
+			{
+				*pBits = 0;
+			}
+			if(GetPixel(x,y) != 0)
+			{
+				*pBits |= mask[index];
+			}
+			index++;
+			if(index == 8)
+			{
+				index = 0;
+				pBits++;
+			}
+		}
+		if(index != 0)
+		{
+			pBits++;
+		}
+	}
+	return ret;
+}
+
+//垂直扫描,8bit,MSB
+INT  CBitFont::GetBitsVertMSB(BYTE* pBits, INT size)
+{
+	INT x;
+	INT y;
+	INT index;
+	INT ret;
+	const BYTE mask[8] = {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
+	ret = m_nWidth * ((m_nHeight+7)/8);
+	if(size < ret)
+	{
+		return ret;
+	}
+	for(x=0;x<m_nWidth;x++)
+	{
+		index = 0;
+		for(y=0;y<m_nHeight;y++)
+		{
+			if(index==0)
+			{
+				*pBits = 0;
+			}
+			if(GetPixel(x,y) != 0)
+			{
+				*pBits |= mask[index];
+			}
+			index++;
+			if(index == 8)
+			{
+				index = 0;
+				pBits++;
+			}
+		}
+		if(index != 0)
+		{
+			pBits++;
+		}
+	}
+	return ret;
+}
+
+//从BITMAP中读取点阵数据
+//mode=0 水平扫描,MSB
+//mode=1 垂直扫描,MSB
+//mode=2 水平扫描,LSB
+//mode=3 垂直扫描,LSB
+INT CBitFont::GetBits(INT mode, BYTE* pBits, INT size)
+{
+	switch(mode)
+	{
+	case 0:
+		return GetBitsHorzMSB(pBits,size);
+	case 1:	
+		return GetBitsVertMSB(pBits, size);
+	case 2:
+		return GetBitsHorzLSB(pBits, size);
+	case 3:
+		return GetBitsVertLSB(pBits, size);
+	}
+	return 0;
 }

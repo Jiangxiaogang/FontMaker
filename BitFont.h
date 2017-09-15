@@ -9,6 +9,10 @@ public:
 	void SetOffset(INT dx, INT dy);
 	void SetSize(INT width, INT height);
 	void PaintFont(WCHAR ch);
+	INT  GetBitsHorzLSB(BYTE* pBits, INT size);
+	INT  GetBitsHorzMSB(BYTE* pBits, INT size);
+	INT  GetBitsVertLSB(BYTE* pBits, INT size);
+	INT  GetBitsVertMSB(BYTE* pBits, INT size);
 	INT  GetBits(INT mode, BYTE* pBits, INT size);
 	HDC  GetDC();
 private:

@@ -7,7 +7,6 @@
 
 
 // CAboutBox 对话框
-
 IMPLEMENT_DYNAMIC(CAboutBox, CDialog)
 
 CAboutBox::CAboutBox(CWnd* pParent /*=NULL*/)
@@ -39,8 +38,8 @@ static WCHAR szLicense[]=
 static WCHAR szVersion[]=
 {
 	L"软件名称: 通用点阵提取工具\r\n"
-	L"软件版本: 1.0.1\r\n"
-	L"编译日期: 2016.11.16\r\n"
+	L"软件版本: 1.1.0\r\n"
+	L"编译日期: 2017.09.02\r\n"
 	L"软件作者: 星沉地动\r\n"
 	L"联系方式: 446252221@qq.com\r\n"
 };

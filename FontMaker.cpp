@@ -27,19 +27,22 @@ CFontMakerApp::CFontMakerApp()
 // 唯一的一个 CFontMakerApp 对象
 CFontMakerApp theApp;
 
-
-// CFontMakerApp 初始化
-BOOL CFontMakerApp::InitInstance()
+BOOL CFontMakerApp::InitApplication()
 {
 	INITCOMMONCONTROLSEX InitCtrls;
 	InitCtrls.dwSize = sizeof(InitCtrls);
 	InitCtrls.dwICC = ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&InitCtrls);
+	return TRUE;
+}
+
+// CFontMakerApp 初始化
+BOOL CFontMakerApp::InitInstance()
+{
 	CWinApp::InitInstance();
 	CFontMakerDlg dlg;
 	m_pMainWnd = &dlg;
 	dlg.DoModal();
-
 	return FALSE;
 }
 

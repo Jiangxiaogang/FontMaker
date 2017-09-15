@@ -19,39 +19,25 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
 private:
-	CEditBox m_ebox;
 	CDraw m_draw;
+	CEditBox m_ebox;
 	CBitFont m_bitfont;
 	CCharset m_charset;
 	HFONT m_hFont;
 	WCHAR m_wChar;
 	UINT  m_nCharIndex;
-
-// 实现
-protected:
-	HICON m_hIcon;
-public:
-	// 生成的消息映射函数
-	virtual BOOL OnInitDialog();
-	void PaintFont();
-	void OnFontChange();
-	void OnCharChange();
-	void OnCharsetChange();
-	BOOL CreateBinFile(CFile* pFile,int mode);
-	BOOL CreateCFile(CFile* pFile,int mode);
-	DECLARE_MESSAGE_MAP()
-	BOOL bInitOK;
-	CString m_szCharsetPath;
-	CComboBox m_listFontName;
+	BOOL m_bInitOK;
 	int m_nFontSize;
-	CComboBox m_listFontStyle;
-	CComboBox m_listCharset;
-	CButton m_btnEdit;
 	int m_nFontWidth;
 	int m_nFontHeight;
 	int m_nOffsetX;
 	int m_nOffsetY;
-	CStatic m_wndCode;
+	CString m_szCharsetPath;
+	CComboBox m_listFontName;
+	CComboBox m_listFontStyle;
+	CComboBox m_listCharset;
+	CComboBox m_listFormat;
+	CButton m_btnEdit;
 	CButton m_btnSave;
 	CStatic m_wndBitmap;
 	CSpinButtonCtrl m_spFontSize;
@@ -59,7 +45,23 @@ public:
 	CSpinButtonCtrl m_spFontHeight;
 	CSpinButtonCtrl m_spOffsetX;
 	CSpinButtonCtrl m_spOffsetY;
-	CComboBox m_listFormat;
+	CSpinButtonCtrl m_spCurrIndex;
+
+// 实现
+protected:
+	HICON m_hIcon;
+public:
+	// 生成的消息映射函数
+	virtual BOOL OnInitDialog();
+	virtual void PostNcDestroy();
+	void PaintFont();
+	void OnFontChange();
+	void OnCharChange();
+	void OnCharsetChange();
+	void OnCharTableChange();
+	BOOL CreateBinFile(CFile* pFile,int mode);
+	BOOL CreateCFile(CFile* pFile,int mode);
+	DECLARE_MESSAGE_MAP()
 	afx_msg void OnPaint();
 	afx_msg void OnBnClickedBtnPrev();
 	afx_msg void OnBnClickedBtnNext();
@@ -75,6 +77,5 @@ public:
 	afx_msg void OnEnChangeEditHeight();
 	afx_msg void OnEnChangeEditHorz();
 	afx_msg void OnEnChangeEditVert();
-public:
-	afx_msg void OnDestroy();
+	afx_msg void OnEnChangeEditIndex();
 };

@@ -13,7 +13,7 @@
 CFontMakerDlg::CFontMakerDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CFontMakerDlg::IDD, pParent)
 {
-	bInitOK = FALSE;
+	m_bInitOK = 0;
 	m_nCharIndex = 0;
 	m_wChar = L'0';
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -25,21 +25,19 @@ void CFontMakerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_FONT_NAME, m_listFontName);
 	DDX_Control(pDX, IDC_LIST_FONT_STYLE, m_listFontStyle);
 	DDX_Control(pDX, IDC_LIST_CHARSET, m_listCharset);
+	DDX_Control(pDX, IDC_LIST_FORMAT, m_listFormat);
 	DDX_Control(pDX, IDC_BTN_EDIT, m_btnEdit);
-	DDX_Control(pDX, IDC_TEXT_CODE, m_wndCode);
 	DDX_Control(pDX, IDC_BTN_SAVE, m_btnSave);
-	DDX_Control(pDX, IDC_SPIN5, m_spFontSize);
 	DDX_Control(pDX, IDC_SPIN1, m_spFontWidth);
 	DDX_Control(pDX, IDC_SPIN3, m_spFontHeight);
 	DDX_Control(pDX, IDC_SPIN2, m_spOffsetX);
 	DDX_Control(pDX, IDC_SPIN4, m_spOffsetY);
-	DDX_Control(pDX, IDC_LIST_FORMAT, m_listFormat);
+	DDX_Control(pDX, IDC_SPIN5, m_spFontSize);
+	DDX_Control(pDX, IDC_SPIN6, m_spCurrIndex);
 }
 
 BEGIN_MESSAGE_MAP(CFontMakerDlg, CDialog)
 	//}}AFX_MSG_MAP
-	ON_BN_CLICKED(IDC_BTN_PREV, &CFontMakerDlg::OnBnClickedBtnPrev)
-	ON_BN_CLICKED(IDC_BTN_NEXT, &CFontMakerDlg::OnBnClickedBtnNext)
 	ON_BN_CLICKED(IDC_BTN_EDIT, &CFontMakerDlg::OnBnClickedBtnEdit)
 	ON_BN_CLICKED(IDC_BTN_SAVE, &CFontMakerDlg::OnBnClickedBtnSave)
 	ON_CBN_SELCHANGE(IDC_LIST_FONT_NAME, &CFontMakerDlg::OnCbnSelchangeListFontName)
@@ -52,9 +50,10 @@ BEGIN_MESSAGE_MAP(CFontMakerDlg, CDialog)
 	ON_EN_CHANGE(IDC_EDIT_HEIGHT, &CFontMakerDlg::OnEnChangeEditHeight)
 	ON_EN_CHANGE(IDC_EDIT_HORZ, &CFontMakerDlg::OnEnChangeEditHorz)
 	ON_EN_CHANGE(IDC_EDIT_VERT, &CFontMakerDlg::OnEnChangeEditVert)
-	ON_WM_DESTROY()
+	ON_EN_CHANGE(IDC_EDIT_INDEX, &CFontMakerDlg::OnEnChangeEditIndex)
 END_MESSAGE_MAP()
 
+//枚举系统字体
 static int CALLBACK FontEnumProc(CONST ENUMLOGFONT *lpelfe,CONST TEXTMETRIC *lpntme,DWORD FontType,LPARAM lParam)
 {
 	CComboBox* pComboBox;
@@ -75,14 +74,15 @@ static void InitFontFamily(CComboBox* pComboBox)
 	HDC hdc;
 	LOGFONT lf;
 	ZeroMemory(&lf,sizeof(lf));
-	hdc = GetDC(NULL);
 	lf.lfCharSet = DEFAULT_CHARSET;
+	hdc = GetDC(NULL);
 	::EnumFontFamiliesEx(hdc,&lf,(FONTENUMPROCW)::FontEnumProc,(LPARAM)pComboBox,0);
 	ReleaseDC(NULL,hdc);
 	pComboBox->SetCurSel(0);
 }
 
-static int GetFileName(LPTSTR lpFile, LPTSTR lpName, int count)
+//返回文件标题,不含后缀名
+static int GetFileTitle(LPTSTR lpFile, LPTSTR lpName, int count)
 {
 	int ret;
 	TCHAR* dot;
@@ -101,13 +101,13 @@ static int GetFileName(LPTSTR lpFile, LPTSTR lpName, int count)
 	return ret;
 }
 
-//遍历文件夹
+//遍历文件夹,搜索*.cst
 static UINT InitCharset(CComboBox* pComboBox)
 {
 	UINT count;
 	HANDLE hFind;
 	CString szPath;
-	WCHAR title[256];
+	WCHAR title[MAX_PATH];
 	WIN32_FIND_DATA wfd;
 	count = 0;
 	theApp.GetPath(szPath);
@@ -116,12 +116,12 @@ static UINT InitCharset(CComboBox* pComboBox)
 	if(hFind!=INVALID_HANDLE_VALUE)
 	{
 		count++;
-		GetFileName(wfd.cFileName,title,256);
+		GetFileTitle(wfd.cFileName,title,MAX_PATH);
 		pComboBox->AddString(title);
 		while(FindNextFile(hFind,&wfd))
 		{
 			count++;
-			GetFileName(wfd.cFileName,title,256);
+			GetFileTitle(wfd.cFileName,title,MAX_PATH);
 			pComboBox->AddString(title);
 		}
 		FindClose(hFind);
@@ -163,17 +163,17 @@ void CFontMakerDlg::OnFontChange()
 
 void CFontMakerDlg::OnCharChange()
 {
-	int count;
 	CString str;
-	count = m_charset.GetCharCount();
 	m_wChar = m_charset.GetChar(m_nCharIndex);
-	str.Format(L"[%d/%d]:[U+%04X]",m_nCharIndex+1,count,m_wChar);
-	SetDlgItemText(IDC_TEXT_CODE,str);
+	str.Format(L"%04X",m_wChar);
+	SetDlgItemText(IDC_TEXT_UNICODE,str);
 	PaintFont();
 }
 
+//标准字符集变更
 void CFontMakerDlg::OnCharsetChange()
 {
+	UINT count;
 	CString name;
 	m_listCharset.GetWindowText(name);
 	name.Append(L".cst");
@@ -181,11 +181,33 @@ void CFontMakerDlg::OnCharsetChange()
 	m_charset.Delete();
 	if(!m_charset.LoadFromFile(name))
 	{
-		m_charset.Create(L"0123456789");
-		MessageBox(L"加载字符集失败!",L"错误提示",MB_OK|MB_ICONWARNING);
+		m_spCurrIndex.SetRange32(0, 0);
+		SetDlgItemInt(IDC_TEXT_COUNT, 0);
+		m_nCharIndex = 0;
+		MessageBox(L"加载字符集文件失败!",L"错误提示",MB_OK|MB_ICONWARNING);
+		return;
 	}
+	count = m_charset.GetCharCount();
+	m_spCurrIndex.SetRange32(0, count-1);
+	SetDlgItemInt(IDC_TEXT_COUNT, count);
 	m_nCharIndex = 0;
 	OnCharChange();
+}
+
+//用户码表变更
+void CFontMakerDlg::OnCharTableChange()
+{
+	UINT count;
+	if(m_ebox.m_pzTable != NULL)
+	{
+		m_charset.Delete();
+		m_charset.Create(m_ebox.m_pzTable);
+		count = m_charset.GetCharCount();
+		m_spCurrIndex.SetRange32(0, count-1);
+		SetDlgItemInt(IDC_TEXT_COUNT, count);
+		m_nCharIndex = 0;
+		OnCharChange();
+	}
 }
 
 // CFontMakerDlg 消息处理程序
@@ -193,29 +215,31 @@ BOOL CFontMakerDlg::OnInitDialog()
 {
 	int count;
 	CDialog::OnInitDialog();
-	SetWindowText(L"通用点阵提取工具");
-	theApp.GetPath(m_szCharsetPath);
-	m_szCharsetPath.Append(L"charset\\");
-	m_draw.SubclassDlgItem(IDC_BITMAP,this);
-	m_draw.SetDC(m_bitfont.GetDC());
-	m_charset.Create(L"0123456789");
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
+	SetWindowText(L"通用点阵提取工具");
 	InitFontFamily(&m_listFontName);
-	CheckDlgButton(IDC_BTN_SCAN1,1);
+	
+	m_draw.SubclassDlgItem(IDC_BITMAP,this);
+	m_draw.SetDC(m_bitfont.GetDC());
+	
+	theApp.GetPath(m_szCharsetPath);
+	m_szCharsetPath.Append(L"charset\\");
 	count=InitCharset(&m_listCharset);
 	if(count==0)
 	{
 		GetDlgItem(IDC_BTN_STD)->EnableWindow(FALSE);
 		CheckDlgButton(IDC_BTN_USER,1);
 		OnBnClickedBtnUser();
+		OnCharTableChange();
 	}
 	else
 	{
 		CheckDlgButton(IDC_BTN_STD,1);
 		OnBnClickedBtnStd();
+		OnCharsetChange();
 	}
-	
+	m_bInitOK = TRUE;
 	m_listFontStyle.SetCurSel(0);
 	m_listFormat.SetCurSel(0);
 	m_spFontSize.SetRange(1,+999);
@@ -224,61 +248,131 @@ BOOL CFontMakerDlg::OnInitDialog()
 	m_spOffsetX.SetRange(-999,+999);
 	m_spOffsetY.SetRange(-999,+999);
 
-	bInitOK = TRUE;
+	CheckDlgButton(IDC_BTN_SCAN1,1);
+	CheckDlgButton(IDC_BTN_MSB,1);
 	SetDlgItemInt(IDC_EDIT_WIDTH,16);
 	SetDlgItemInt(IDC_EDIT_HEIGHT,16);
 	SetDlgItemInt(IDC_EDIT_HORZ,0);
 	SetDlgItemInt(IDC_EDIT_VERT,0);
 	SetDlgItemInt(IDC_EDIT_FONT_SIZE,16);
-	OnCharChange();
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
+//更新预览图
 void CFontMakerDlg::PaintFont()
 {
 	m_bitfont.PaintFont(m_wChar);
 	m_draw.Invalidate(FALSE);
 }
 
-//上一个预览
-void CFontMakerDlg::OnBnClickedBtnPrev()
-{
-	if(m_nCharIndex==0)
-	{
-		m_nCharIndex = m_charset.GetCharCount()-1;
-	}
-	else
-	{
-		m_nCharIndex--;
-	}
-	OnCharChange();
-}
-
-//下一个预览
-void CFontMakerDlg::OnBnClickedBtnNext()
-{
-	CString str;
-	if(m_nCharIndex==(m_charset.GetCharCount()-1))
-	{
-		m_nCharIndex = 0;
-	}
-	else
-	{
-		m_nCharIndex++;
-	}
-	OnCharChange();
-}
-
 //编辑码表
 void CFontMakerDlg::OnBnClickedBtnEdit()
 {
-	CString str;
 	m_ebox.DoModal();
-	if(m_ebox.m_pzTable != NULL)
+	OnCharTableChange();
+}
+
+
+//字体变更
+void CFontMakerDlg::OnCbnSelchangeListFontName()
+{
+	OnFontChange();
+}
+
+//字形变更
+void CFontMakerDlg::OnCbnSelchangeListFontStyle()
+{
+	OnFontChange();
+}
+
+//字号变更
+void CFontMakerDlg::OnEnChangeEditFontSize()
+{
+	if(m_bInitOK)
 	{
-		m_charset.Delete();
-		m_charset.Create(m_ebox.m_pzTable);
-		m_nCharIndex = 0;
+		OnFontChange();
+	}
+}
+
+//字符集变更
+void CFontMakerDlg::OnCbnSelchangeListCharset()
+{
+	OnCharsetChange();
+}
+
+//选中标准字库
+void CFontMakerDlg::OnBnClickedBtnStd()
+{
+	m_listCharset.EnableWindow(1);
+	m_btnEdit.EnableWindow(0);
+	OnCharsetChange();
+}
+
+//选中用户字库
+void CFontMakerDlg::OnBnClickedBtnUser()
+{
+	m_listCharset.EnableWindow(0);
+	m_btnEdit.EnableWindow(1);
+	OnCharTableChange();
+}
+
+//点阵宽度变更
+void CFontMakerDlg::OnEnChangeEditWidth()
+{
+	if(m_bInitOK)
+	{
+		m_nFontWidth = GetDlgItemInt(IDC_EDIT_WIDTH);
+		m_bitfont.SetSize(m_nFontWidth,m_nFontHeight);
+		m_draw.SetSize(m_nFontWidth,m_nFontHeight);
+		PaintFont();
+	}
+}
+
+//点阵高度变更
+void CFontMakerDlg::OnEnChangeEditHeight()
+{
+	if(m_bInitOK)
+	{
+		m_nFontHeight = GetDlgItemInt(IDC_EDIT_HEIGHT);
+		m_bitfont.SetSize(m_nFontWidth,m_nFontHeight);
+		m_draw.SetSize(m_nFontWidth,m_nFontHeight);
+		PaintFont();
+	}
+}
+
+//水平偏移变更
+void CFontMakerDlg::OnEnChangeEditHorz()
+{
+	if(m_bInitOK)
+	{
+		m_nOffsetX = GetDlgItemInt(IDC_EDIT_HORZ);
+		m_bitfont.SetOffset(m_nOffsetX,m_nOffsetY);
+		PaintFont();
+	}
+}
+
+//垂直偏移变更
+void CFontMakerDlg::OnEnChangeEditVert()
+{
+	if(m_bInitOK)
+	{
+		m_nOffsetY = GetDlgItemInt(IDC_EDIT_VERT);
+		m_bitfont.SetOffset(m_nOffsetX,m_nOffsetY);
+		PaintFont();
+	}
+}
+
+//当前序号变更
+void CFontMakerDlg::OnEnChangeEditIndex()
+{
+	UINT count;
+	UINT index;
+	CString str;
+	count = m_charset.GetCharCount();
+	index = GetDlgItemInt(IDC_EDIT_INDEX);
+	if(index < count)
+	{
+		m_nCharIndex = index;
 		OnCharChange();
 	}
 }
@@ -350,8 +444,16 @@ BOOL CFontMakerDlg::CreateCFile(CFile* pFile, int mode)
 	INT str_len;
 	INT mem_len;
 	WCHAR ch;
+	CHAR font_name[32];
 	char* ansi;
 	BYTE* bitmap;
+	PCSTR scan_mode[4]=
+	{
+		"水平扫描,MSB",
+		"垂直扫描,MSB",
+		"水平扫描,LSB",
+		"垂直扫描,LSB",
+	};
 	mem_len = 128*1024;
 	bitmap = (BYTE*)malloc(mem_len);
 	if(bitmap==NULL)
@@ -364,48 +466,51 @@ BOOL CFontMakerDlg::CreateCFile(CFile* pFile, int mode)
 		free(bitmap);
 		return 0;
 	}
+	GetDlgItemTextA(GetSafeHwnd(), IDC_LIST_FONT_NAME, font_name, 32);
 	count = m_charset.GetCharCount();
-	str_len = sprintf(ansi, "/******************************************************************************\r\n"
-		                    "* Font Width:%d\r\n"
-							"* Font Height:%d\r\n"
-							"* Font Count:%d\r\n"
-							"*******************************************************************************/\r\n",
-							m_nFontWidth,m_nFontHeight,count);
+	str_len = sprintf_s(ansi, mem_len,
+		"/******************************************************************************\r\n"
+		"* 字体名称: %s\r\n"
+        "* 点阵大小: %dx%d\r\n"
+		"* 字符数量: %d\r\n"
+		"* 扫描方式: %s\r\n"
+		"*******************************************************************************/\r\n"
+		"unsigned char *data=\r\n{\r\n",
+		font_name,m_nFontWidth,m_nFontHeight,count,scan_mode[mode]);
 	pFile->Write(ansi,str_len);
 	for(i=0;i<count;i++)
 	{
 		ch = m_charset.GetChar(i);
 		m_bitfont.PaintFont(ch);
 		len = m_bitfont.GetBits(mode,bitmap,mem_len);
-		str_len = sprintf(ansi, "//UNICODE:%02X\r\n",ch);
+		str_len = sprintf_s(ansi, mem_len, "//UNICODE:0x%02X\r\n",ch);
 		pFile->Write(ansi,str_len);
 		str_len = bin_to_hex(ansi,bitmap,len);
 		pFile->Write(ansi,str_len);
-		str_len = sprintf(ansi, "\r\n",ch);
+		str_len = sprintf_s(ansi, mem_len, "\r\n",ch);
 		pFile->Write(ansi,str_len);
 	}
+	str_len = sprintf_s(ansi, mem_len, "};\r\n");
+	pFile->Write(ansi,str_len);
+	
 	free(bitmap);
 	free(ansi);
 	return 1;
 }
 
-
 //保存字库
 void CFontMakerDlg::OnBnClickedBtnSave()
 {
+	INT scan;
+	INT msb;
 	INT mode;
 	INT type;
 	CFile cf;
 	CFileDialog fbox(0);
 	CString szName;
-	if(IsDlgButtonChecked(IDC_BTN_SCAN1))
-	{
-		mode = 0;
-	}
-	else
-	{
-		mode = 1;
-	}
+	scan = IsDlgButtonChecked(IDC_BTN_SCAN2);
+	msb  = IsDlgButtonChecked(IDC_BTN_LSB);
+	mode = (msb<<1)+scan;
 	type = m_listFormat.GetCurSel();
 	if(fbox.DoModal()==IDOK)
 	{
@@ -428,96 +533,9 @@ void CFontMakerDlg::OnBnClickedBtnSave()
 	}
 }
 
-//字体变更
-void CFontMakerDlg::OnCbnSelchangeListFontName()
+void CFontMakerDlg::PostNcDestroy()
 {
-	OnFontChange();
-}
-
-//字形变更
-void CFontMakerDlg::OnCbnSelchangeListFontStyle()
-{
-	OnFontChange();
-}
-
-//字号变更
-void CFontMakerDlg::OnEnChangeEditFontSize()
-{
-	if(bInitOK)
-	{
-		OnFontChange();
-	}
-}
-
-//字符集变更
-void CFontMakerDlg::OnCbnSelchangeListCharset()
-{
-	OnCharsetChange();
-}
-
-//选中标准字库
-void CFontMakerDlg::OnBnClickedBtnStd()
-{
-	m_listCharset.EnableWindow(1);
-	m_btnEdit.EnableWindow(0);
-	OnCharsetChange();
-}
-
-//选中用户字库
-void CFontMakerDlg::OnBnClickedBtnUser()
-{
-	m_listCharset.EnableWindow(0);
-	m_btnEdit.EnableWindow(1);
-}
-
-//点阵宽度变更
-void CFontMakerDlg::OnEnChangeEditWidth()
-{
-	if(bInitOK)
-	{
-		m_nFontWidth = GetDlgItemInt(IDC_EDIT_WIDTH);
-		m_bitfont.SetSize(m_nFontWidth,m_nFontHeight);
-		m_draw.SetSize(m_nFontWidth,m_nFontHeight);
-		PaintFont();
-	}
-}
-
-//点阵高度变更
-void CFontMakerDlg::OnEnChangeEditHeight()
-{
-	if(bInitOK)
-	{
-		m_nFontHeight = GetDlgItemInt(IDC_EDIT_HEIGHT);
-		m_bitfont.SetSize(m_nFontWidth,m_nFontHeight);
-		m_draw.SetSize(m_nFontWidth,m_nFontHeight);
-		PaintFont();
-	}
-}
-
-//点阵水平偏移变更
-void CFontMakerDlg::OnEnChangeEditHorz()
-{
-	if(bInitOK)
-	{
-		m_nOffsetX = GetDlgItemInt(IDC_EDIT_HORZ);
-		m_bitfont.SetOffset(m_nOffsetX,m_nOffsetY);
-		PaintFont();
-	}
-}
-
-//点阵垂直偏移变更
-void CFontMakerDlg::OnEnChangeEditVert()
-{
-	if(bInitOK)
-	{
-		m_nOffsetY = GetDlgItemInt(IDC_EDIT_VERT);
-		m_bitfont.SetOffset(m_nOffsetX,m_nOffsetY);
-		PaintFont();
-	}
-}
-
-void CFontMakerDlg::OnDestroy()
-{
-	CDialog::OnDestroy();
+	// TODO: 在此添加专用代码和/或调用基类
 	m_charset.Delete();
+	CDialog::PostNcDestroy();
 }

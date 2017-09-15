@@ -1,6 +1,4 @@
 // EditBox.cpp : 实现文件
-//
-
 #include "stdafx.h"
 #include "FontMaker.h"
 #include "EditBox.h"
@@ -21,7 +19,8 @@ IMPLEMENT_DYNAMIC(CEditBox, CDialog)
 CEditBox::CEditBox(CWnd* pParent /*=NULL*/)
 	: CDialog(CEditBox::IDD, pParent)
 {
-	m_pzTable = NULL;
+	m_pzTable = (WCHAR*)malloc(4);
+	wcscpy_s(m_pzTable, 4, L"0");
 }
 
 CEditBox::~CEditBox()

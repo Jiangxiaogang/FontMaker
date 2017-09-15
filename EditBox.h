@@ -3,7 +3,6 @@
 
 
 // CEditBox 对话框
-
 class CEditBox : public CDialog
 {
 	DECLARE_DYNAMIC(CEditBox)
@@ -17,7 +16,6 @@ public:
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
-
 	DECLARE_MESSAGE_MAP()
 public:
 	WCHAR* m_pzTable;

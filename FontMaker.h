@@ -22,6 +22,7 @@ private:
 	BOOL bHelp;
 // ÖØÐ´
 public:
+	virtual BOOL InitApplication();
 	virtual BOOL InitInstance();
 	BOOL GetPath(CString& path);
 	void OnHelp();
