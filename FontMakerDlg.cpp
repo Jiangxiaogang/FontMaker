@@ -137,7 +137,7 @@ void CFontMakerDlg::OnFontChange()
 	ZeroMemory(&lf,sizeof(lf));
 	lf.lfCharSet = DEFAULT_CHARSET;
 	m_listFontName.GetWindowText(lf.lfFaceName,32);
-	lf.lfHeight = GetDlgItemInt(IDC_EDIT_FONT_SIZE);
+	lf.lfHeight = m_nFontSize;
 	style=m_listFontStyle.GetCurSel();
 	switch(style)
 	{
@@ -290,6 +290,7 @@ void CFontMakerDlg::OnEnChangeEditFontSize()
 {
 	if(m_bInitOK)
 	{
+        m_nFontSize = GetDlgItemInt(IDC_EDIT_FONT_SIZE);
 		OnFontChange();
 	}
 }
@@ -435,6 +436,11 @@ static int bin_to_hex(char* output, void* input, int len)
 	return (int)(output-start);
 }
 
+static int UnicodeToGBK(const WCHAR* input, char* output, int size)
+{
+    return WideCharToMultiByte(CP_ACP, 0, input, 1, output, size, NULL, NULL);		
+}
+
 //生成C文件 
 BOOL CFontMakerDlg::CreateCFile(CFile* pFile, int mode)
 {
@@ -444,7 +450,9 @@ BOOL CFontMakerDlg::CreateCFile(CFile* pFile, int mode)
 	INT str_len;
 	INT mem_len;
 	WCHAR ch;
+    CHAR ch_ansi[8];
 	CHAR font_name[32];
+    CHAR font_style[32];
 	char* ansi;
 	BYTE* bitmap;
 	PCSTR scan_mode[4]=
@@ -466,24 +474,27 @@ BOOL CFontMakerDlg::CreateCFile(CFile* pFile, int mode)
 		free(bitmap);
 		return 0;
 	}
-	GetDlgItemTextA(GetSafeHwnd(), IDC_LIST_FONT_NAME, font_name, 32);
+    
+    ::GetWindowTextA(m_listFontName.GetSafeHwnd(), font_name, 32);
+    ::GetWindowTextA(m_listFontStyle.GetSafeHwnd(), font_style, 32);
 	count = m_charset.GetCharCount();
 	str_len = sprintf_s(ansi, mem_len,
 		"/******************************************************************************\r\n"
-		"* 字体名称: %s\r\n"
+		"* 逻辑字体: %s, %s, %d\r\n"
         "* 点阵大小: %dx%d\r\n"
 		"* 字符数量: %d\r\n"
 		"* 扫描方式: %s\r\n"
 		"*******************************************************************************/\r\n"
-		"unsigned char *data=\r\n{\r\n",
-		font_name,m_nFontWidth,m_nFontHeight,count,scan_mode[mode]);
+		"static const unsigned char data[]=\r\n{\r\n",
+		font_name,font_style,m_nFontSize,m_nFontWidth,m_nFontHeight,count,scan_mode[mode]);
 	pFile->Write(ansi,str_len);
 	for(i=0;i<count;i++)
 	{
 		ch = m_charset.GetChar(i);
 		m_bitfont.PaintFont(ch);
 		len = m_bitfont.GetBits(mode,bitmap,mem_len);
-		str_len = sprintf_s(ansi, mem_len, "//UNICODE:0x%02X\r\n",ch);
+        UnicodeToGBK(&ch, ch_ansi, 8);
+		str_len = sprintf_s(ansi, mem_len, "//0x%04X(%s)\r\n", ch, ch_ansi);
 		pFile->Write(ansi,str_len);
 		str_len = bin_to_hex(ansi,bitmap,len);
 		pFile->Write(ansi,str_len);
