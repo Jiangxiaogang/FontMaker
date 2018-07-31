@@ -389,7 +389,7 @@ void CFontMakerDlg::OnBnClickedBtnSave()
     CString name;
     CFileMaker maker;
 	CFileDialog fbox(0);
-	scan = IsDlgButtonChecked(IDC_BTN_SCAN1);
+	scan = IsDlgButtonChecked(IDC_BTN_SCAN2);
 	msb  = IsDlgButtonChecked(IDC_BTN_MSB);
     var  = IsDlgButtonChecked(IDC_BTN_VW);
 	if(fbox.DoModal()==IDOK)
