@@ -30,7 +30,7 @@
 #define IDC_BTN_MSB                     1020
 #define IDC_BTN_LSB                     1021
 #define IDC_TEXT_CODE                   1022
-#define IDC_EDIT_NUM                    1022
+#define IDC_TEXT_INFO                   1022
 #define IDC_EDIT_INDEX                  1022
 #define IDC_LIST_CHARSET                1023
 #define IDC_BTN_EDIT                    1024
@@ -38,14 +38,16 @@
 #define IDC_BTN_USER                    1026
 #define IDC_LIST_FORMAT                 1027
 #define IDC_EDIT_TABLE                  1028
-#define IDC_TEXT_UNICODE                1028
 #define IDC_BTN_LOAD                    1030
-#define IDC_TEXT_COUNT                  1030
 #define IDC_BTN_NUM                     1032
 #define IDC_BTN_LETTER                  1033
 #define IDC_EDIT1                       1035
 #define IDC_EDIT2                       1036
 #define IDC_SPIN6                       1036
+#define IDC_BTN_FW                      1037
+#define IDC_BTN_VW                      1038
+#define IDC_BTN_C                       1039
+#define IDC_BTN_BIN                     1040
 
 // Next default values for new objects
 // 
@@ -53,7 +55,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        133
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1037
+#define _APS_NEXT_CONTROL_VALUE         1041
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

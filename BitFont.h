@@ -8,16 +8,14 @@ public:
 	void SetFont(HFONT hFont);
 	void SetOffset(INT dx, INT dy);
 	void SetSize(INT width, INT height);
-	void PaintFont(WCHAR ch);
-	INT  GetBitsHorzLSB(BYTE* pBits, INT size);
-	INT  GetBitsHorzMSB(BYTE* pBits, INT size);
-	INT  GetBitsVertLSB(BYTE* pBits, INT size);
-	INT  GetBitsVertMSB(BYTE* pBits, INT size);
-	INT  GetBits(INT mode, BYTE* pBits, INT size);
+	void PaintChar(WCHAR ch);
+    INT  GetBits(BYTE* pBits, INT size, INT scan, BOOL msb, BOOL var);
 	HDC  GetDC();
 private:
-	void UpdateBitmap();
+	void CreateBitmap();
 	BYTE GetPixel(int x, int y);
+    INT  GetBitsHorz(BYTE* pBits, INT size, BOOL msb, BOOL vw);
+    INT  GetBitsVert(BYTE* pBits, INT size, BOOL msb, BOOL vw);
 private:
 	HDC m_hdc;
 	HBITMAP m_hBitmap;
@@ -27,4 +25,5 @@ private:
 	INT m_nOffsetY;
 	INT m_nWidth;
 	INT m_nHeight;
+    INT m_nCharWidth;
 };

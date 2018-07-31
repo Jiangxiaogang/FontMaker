@@ -2,7 +2,7 @@
 //
 
 #include "stdafx.h"
-#include "FontMaker.h"
+#include "FontMakerApp.h"
 #include "AboutBox.h"
 
 
@@ -37,9 +37,9 @@ static WCHAR szLicense[]=
 
 static WCHAR szVersion[]=
 {
-	L"软件名称: 通用点阵提取工具\r\n"
-	L"软件版本: 1.1.2\r\n"
-	L"编译日期: 2017.10.12\r\n"
+	L"软件名称: 点阵字库生成工具\r\n"
+	L"软件版本: 1.2.0\r\n"
+	L"编译日期: 2018.07.31\r\n"
 	L"软件作者: 星沉地动\r\n"
 	L"联系方式: 446252221@qq.com\r\n"
 };

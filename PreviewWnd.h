@@ -2,9 +2,9 @@
 
 
 // CDraw
-class CDraw : public CWnd
+class CPreviewWnd : public CWnd
 {
-	DECLARE_DYNAMIC(CDraw)
+	DECLARE_DYNAMIC(CPreviewWnd)
 public:
 	void SetDC(HDC hdc);
 	void SetSize(INT width, INT height);

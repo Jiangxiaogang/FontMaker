@@ -1,6 +1,6 @@
 // EditBox.cpp : 实现文件
 #include "stdafx.h"
-#include "FontMaker.h"
+#include "FontMakerApp.h"
 #include "EditBox.h"
 
 static int UnicodeToUTF8(const WCHAR* input, char* output, int size)

@@ -8,6 +8,7 @@ CBitFont::CBitFont(void)
 	m_nOffsetY = 0;
 	m_nWidth = 1;
 	m_nHeight= 1;
+    m_nCharWidth = 0;
 	m_hBitmap = NULL;
 	hdc = ::GetDC(NULL);
 	m_hdc = ::CreateCompatibleDC(hdc);
@@ -28,7 +29,7 @@ CBitFont::~CBitFont(void)
 	}
 }
 
-void CBitFont::UpdateBitmap(void)
+void CBitFont::CreateBitmap(void)
 {
 	HBITMAP hBitmap;
 	BITMAPINFO bmi;
@@ -67,15 +68,18 @@ void CBitFont::SetSize(INT width, INT height)
 	m_nWidth = width;
 	m_nHeight= height;
 	m_nBytesPerLine = 4*((width+3)/4);
-	UpdateBitmap();
+	CreateBitmap();
 }
 
-void CBitFont::PaintFont(WCHAR ch)
+void CBitFont::PaintChar(WCHAR ch)
 {
 	RECT rc;
+    SIZE sz;
 	SetRect(&rc,0,0,m_nWidth,m_nHeight);
-	::FillRect(m_hdc,&rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
+	::FillRect(m_hdc,&rc,(HBRUSH)GetStockObject(BLACK_BRUSH));
 	::TextOut(m_hdc,m_nOffsetX,m_nOffsetY,&ch,1);
+    ::GetTextExtentPoint32W(m_hdc,&ch,1,&sz);
+    m_nCharWidth = sz.cx;
 }
 
 HDC CBitFont::GetDC()
@@ -83,9 +87,6 @@ HDC CBitFont::GetDC()
 	return m_hdc;
 }
 
-//点阵数据在内存中的格式:
-//1.4字节对齐
-//2.垂直巅倒
 BYTE CBitFont::GetPixel(int x, int y)
 {
 	int line;
@@ -95,19 +96,27 @@ BYTE CBitFont::GetPixel(int x, int y)
 	return pLine[x];
 }
 
-//水平扫描,8bit,LSB
-INT  CBitFont::GetBitsHorzLSB(BYTE* pBits, INT size)
+INT  CBitFont::GetBitsHorz(BYTE* pBits, INT size, BOOL msb, BOOL vw)
 {
 	INT x;
 	INT y;
 	INT index;
 	INT ret;
-	const BYTE mask[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+	const BYTE mask_lsb[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+    const BYTE mask_msb[8] = {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
+    const BYTE *mask = msb ? mask_msb : mask_lsb;
 	ret = m_nHeight * ((m_nWidth+7)/8);
+    ret += vw ? 2 : 0;
 	if(size < ret)
 	{
 		return ret;
 	}
+    if(vw)
+    {
+        pBits[0] = m_nCharWidth>>8;
+        pBits[1] = m_nCharWidth;
+        pBits += 2;
+    }
 	for(y=0;y<m_nHeight;y++)
 	{
 		index = 0;
@@ -136,60 +145,28 @@ INT  CBitFont::GetBitsHorzLSB(BYTE* pBits, INT size)
 	return ret;
 }
 
-//水平扫描,8bit,MSB
-INT  CBitFont::GetBitsHorzMSB(BYTE* pBits, INT size)
-{
-	INT x;
-	INT y;
-	INT index;
-	INT ret;
-	const BYTE mask[8] = {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
-	ret = m_nHeight * ((m_nWidth+7)/8);
-	if(size < ret)
-	{
-		return ret;
-	}
-	for(y=0;y<m_nHeight;y++)
-	{
-		index = 0;
-		for(x=0;x<m_nWidth;x++)
-		{
-			if(index==0)
-			{
-				*pBits = 0;
-			}
-			if(GetPixel(x,y) != 0)
-			{
-				*pBits |= mask[index];
-			}
-			index++;
-			if(index==8)
-			{
-				index = 0;
-				pBits++;
-			}
-		}
-		if(index != 0)
-		{
-			pBits++;
-		}
-	}
-	return ret;
-}
 
-//垂直扫描,8bit,LSB
-INT  CBitFont::GetBitsVertLSB(BYTE* pBits, INT size)
+INT  CBitFont::GetBitsVert(BYTE* pBits, INT size, BOOL msb, BOOL vw)
 {
 	INT x;
 	INT y;
 	INT index;
 	INT ret;
-	const BYTE mask[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+	const BYTE mask_lsb[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+    const BYTE mask_msb[8] = {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
+    const BYTE *mask = msb ? mask_msb : mask_lsb;
 	ret = m_nWidth * ((m_nHeight+7)/8);
+    ret += vw ? 2 : 0;
 	if(size < ret)
 	{
 		return ret;
 	}
+    if(vw)
+    {
+        pBits[0] = m_nCharWidth>>8;
+        pBits[1] = m_nCharWidth;
+        pBits += 2;
+    }
 	for(x=0;x<m_nWidth;x++)
 	{
 		index = 0;
@@ -218,64 +195,15 @@ INT  CBitFont::GetBitsVertLSB(BYTE* pBits, INT size)
 	return ret;
 }
 
-//垂直扫描,8bit,MSB
-INT  CBitFont::GetBitsVertMSB(BYTE* pBits, INT size)
+INT CBitFont::GetBits(BYTE* pBits, INT size, INT scan, BOOL msb, BOOL var)
 {
-	INT x;
-	INT y;
-	INT index;
-	INT ret;
-	const BYTE mask[8] = {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
-	ret = m_nWidth * ((m_nHeight+7)/8);
-	if(size < ret)
-	{
-		return ret;
-	}
-	for(x=0;x<m_nWidth;x++)
-	{
-		index = 0;
-		for(y=0;y<m_nHeight;y++)
-		{
-			if(index==0)
-			{
-				*pBits = 0;
-			}
-			if(GetPixel(x,y) != 0)
-			{
-				*pBits |= mask[index];
-			}
-			index++;
-			if(index == 8)
-			{
-				index = 0;
-				pBits++;
-			}
-		}
-		if(index != 0)
-		{
-			pBits++;
-		}
-	}
-	return ret;
-}
-
-//从BITMAP中读取点阵数据
-//mode=0 水平扫描,MSB
-//mode=1 垂直扫描,MSB
-//mode=2 水平扫描,LSB
-//mode=3 垂直扫描,LSB
-INT CBitFont::GetBits(INT mode, BYTE* pBits, INT size)
-{
-	switch(mode)
-	{
-	case 0:
-		return GetBitsHorzMSB(pBits,size);
-	case 1:	
-		return GetBitsVertMSB(pBits, size);
-	case 2:
-		return GetBitsHorzLSB(pBits, size);
-	case 3:
-		return GetBitsVertLSB(pBits, size);
-	}
-	return 0;
+    switch(scan)
+    {
+    case 0:
+        return GetBitsHorz(pBits, size, msb, var);
+    case 1:
+        return GetBitsVert(pBits, size, msb, var);
+    default:
+        return 0;
+    }
 }

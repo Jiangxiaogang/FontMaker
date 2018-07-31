@@ -2,7 +2,7 @@
 //
 
 #include "stdafx.h"
-#include "FontMaker.h"
+#include "FontMakerApp.h"
 #include "FontMakerDlg.h"
 #include "AboutBox.h"
 

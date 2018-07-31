@@ -1,22 +1,22 @@
-// Draw.cpp : 实现文件
+// PreviewWnd.cpp : 实现文件
 #include "stdafx.h"
-#include "FontMaker.h"
-#include "Draw.h"
+#include "FontMakerApp.h"
+#include "PreviewWnd.h"
 
-// CDraw
-IMPLEMENT_DYNAMIC(CDraw, CWnd)
+// CPreviewWnd
+IMPLEMENT_DYNAMIC(CPreviewWnd, CWnd)
 
-BEGIN_MESSAGE_MAP(CDraw, CWnd)
+BEGIN_MESSAGE_MAP(CPreviewWnd, CWnd)
 	ON_WM_PAINT()
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
-void CDraw::SetDC(HDC hdc)
+void CPreviewWnd::SetDC(HDC hdc)
 {
 	m_dc.Attach(hdc);
 }
 
-void CDraw::SetSize(INT width, INT height)
+void CPreviewWnd::SetSize(INT width, INT height)
 {
 	RECT rc;
 	GetClientRect(&rc);
@@ -26,8 +26,8 @@ void CDraw::SetSize(INT width, INT height)
 	m_nPaintY = (rc.bottom-m_nHeight)/2;
 }
 
-// CDraw 消息处理程序
-void CDraw::OnPaint()
+// CPreviewWnd 消息处理程序
+void CPreviewWnd::OnPaint()
 {
 	CBrush br;
 	CRgn rgn;
@@ -41,7 +41,7 @@ void CDraw::OnPaint()
 	rgn.DeleteObject();
 }
 
-void CDraw::PreSubclassWindow()
+void CPreviewWnd::PreSubclassWindow()
 {
 	m_nWidth  = 0;
 	m_nHeight = 0;
@@ -51,7 +51,7 @@ void CDraw::PreSubclassWindow()
 	CWnd::PreSubclassWindow();
 }
 
-void CDraw::OnDestroy()
+void CPreviewWnd::OnDestroy()
 {
 	CWnd::OnDestroy();
 	m_dc.Detach();

@@ -202,19 +202,23 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Draw.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\EditBox.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\FontMaker.cpp"
+				RelativePath=".\FileMaker.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FontMakerApp.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\FontMakerDlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PreviewWnd.cpp"
 				>
 			</File>
 			<File
@@ -256,19 +260,23 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Draw.h"
-				>
-			</File>
-			<File
 				RelativePath=".\EditBox.h"
 				>
 			</File>
 			<File
-				RelativePath=".\FontMaker.h"
+				RelativePath=".\FileMaker.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FontMakerApp.h"
 				>
 			</File>
 			<File
 				RelativePath=".\FontMakerDlg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PreviewWnd.h"
 				>
 			</File>
 			<File

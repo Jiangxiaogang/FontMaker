@@ -2,10 +2,10 @@
 #pragma once
 #include "afxwin.h"
 #include "afxcmn.h"
-#include "bitfont.h"
-#include "Draw.h"
+#include "BitFont.h"
 #include "Charset.h"
 #include "EditBox.h"
+#include "PreviewWnd.h"
 
 // CFontMakerDlg 对话框
 class CFontMakerDlg : public CDialog
@@ -19,7 +19,7 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
 private:
-	CDraw m_draw;
+	CPreviewWnd m_draw;
 	CEditBox m_ebox;
 	CBitFont m_bitfont;
 	CCharset m_charset;
@@ -36,46 +36,34 @@ private:
 	CComboBox m_listFontName;
 	CComboBox m_listFontStyle;
 	CComboBox m_listCharset;
-	CComboBox m_listFormat;
 	CButton m_btnEdit;
-	CButton m_btnSave;
-	CStatic m_wndBitmap;
 	CSpinButtonCtrl m_spFontSize;
 	CSpinButtonCtrl m_spFontWidth;
 	CSpinButtonCtrl m_spFontHeight;
 	CSpinButtonCtrl m_spOffsetX;
 	CSpinButtonCtrl m_spOffsetY;
-	CSpinButtonCtrl m_spCurrIndex;
-
-// 实现
-protected:
 	HICON m_hIcon;
 public:
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
 	virtual void PostNcDestroy();
-	void PaintFont();
+	void RedrawPreview();
 	void OnFontChange();
 	void OnCharChange();
 	void OnCharsetChange();
 	void OnCharTableChange();
-	BOOL CreateBinFile(CFile* pFile,int mode);
-	BOOL CreateCFile(CFile* pFile,int mode);
 	DECLARE_MESSAGE_MAP()
-	afx_msg void OnPaint();
-	afx_msg void OnBnClickedBtnPrev();
-	afx_msg void OnBnClickedBtnNext();
 	afx_msg void OnBnClickedBtnEdit();
 	afx_msg void OnBnClickedBtnSave();
+    afx_msg void OnBnClickedBtnStd();
+	afx_msg void OnBnClickedBtnUser();
 	afx_msg void OnCbnSelchangeListFontName();
 	afx_msg void OnCbnSelchangeListFontStyle();
+    afx_msg void OnCbnSelchangeListCharset();
 	afx_msg void OnEnChangeEditFontSize();
-	afx_msg void OnCbnSelchangeListCharset();
-	afx_msg void OnBnClickedBtnStd();
-	afx_msg void OnBnClickedBtnUser();
 	afx_msg void OnEnChangeEditWidth();
 	afx_msg void OnEnChangeEditHeight();
 	afx_msg void OnEnChangeEditHorz();
 	afx_msg void OnEnChangeEditVert();
-	afx_msg void OnEnChangeEditIndex();
+    afx_msg void OnDeltaposSpin6(NMHDR *pNMHDR, LRESULT *pResult);
 };
