@@ -384,33 +384,47 @@ void CFontMakerDlg::OnBnClickedBtnSave()
 {
 	INT scan;
 	BOOL msb;
-    BOOL var;
+	BOOL var;
 	CFile file;
-    CString name;
-    CFileMaker maker;
-	CFileDialog fbox(0);
+	CString name;
+	CFileMaker maker;
+	BOOL isCFile;
+
 	scan = IsDlgButtonChecked(IDC_BTN_SCAN2);
 	msb  = IsDlgButtonChecked(IDC_BTN_MSB);
-    var  = IsDlgButtonChecked(IDC_BTN_VW);
-	if(fbox.DoModal()==IDOK)
+	var  = IsDlgButtonChecked(IDC_BTN_VW);
+	isCFile = IsDlgButtonChecked(IDC_BTN_C);
+
+	if(isCFile)
 	{
-		name=fbox.GetFileName();
-		if(!file.Open(name,CFile::modeCreate|CFile::modeReadWrite|CFile::shareDenyNone))
+		CFileDialog fbox(0, _T(".c"),NULL,OFN_OVERWRITEPROMPT|OFN_ENABLESIZING,L"所有文件(*.c)|*.c||");
+		if(fbox.DoModal()==IDOK)
 		{
-			MessageBox(L"创建目标文件失败!",L"操作失败",MB_OK|MB_ICONWARNING);
-			return;
+			name=fbox.GetFileName();
+			if(!file.Open(name,CFile::modeCreate|CFile::modeReadWrite|CFile::shareDenyNone))
+			{
+				MessageBox(L"创建目标文件失败!",L"操作失败",MB_OK|MB_ICONWARNING);
+				return;
+			}
+			maker.MakeCppFile(&m_bitfont, &m_charset, &file, scan, msb, var);
 		}
-		if(IsDlgButtonChecked(IDC_BTN_C))
-		{
-            maker.MakeCppFile(&m_bitfont, &m_charset, &file, scan, msb, var);
-		}
-		else
-		{
-            maker.MakeBinFile(&m_bitfont, &m_charset, &file, scan, msb, var);
-		}
-		file.Close();
-		MessageBox(L"保存文件成功",L"操作完成",MB_OK|MB_ICONINFORMATION);
 	}
+	else
+	{
+		CFileDialog fbox(0,_T(".bin"),NULL,OFN_OVERWRITEPROMPT|OFN_ENABLESIZING,L"所有文件(*.bin)|*.bin||");
+		if(fbox.DoModal()==IDOK)
+		{
+			name=fbox.GetFileName();
+			if(!file.Open(name,CFile::modeCreate|CFile::modeReadWrite|CFile::shareDenyNone))
+			{
+				MessageBox(L"创建目标文件失败!",L"操作失败",MB_OK|MB_ICONWARNING);
+				return;
+			}
+			maker.MakeBinFile(&m_bitfont, &m_charset, &file, scan, msb, var);
+		}
+	}
+	file.Close();
+	MessageBox(L"保存文件成功",L"操作完成",MB_OK|MB_ICONINFORMATION);
 }
 
 void CFontMakerDlg::PostNcDestroy()
